@@ -9,13 +9,13 @@ import renderer from './helpers/renderer';
 
 const app = express();
 
-const port = 8080;
+const port = 3000;
 
 app.use(
   '/api',
-  proxy('https://react-ssr-api.herokuapp.com', {
+  proxy('http://react-ssr-api.herokuapp.com', {
     proxyReqOptDecorator(opts) {
-      opts.headers['x-forwarded-host'] = 'https://simchawood.com:3000';
+      opts.headers['x-forwarded-host'] = 'localhost:3000';
       return opts;
     },
   })
