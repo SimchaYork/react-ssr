@@ -9,6 +9,7 @@ import renderer from './helpers/renderer';
 
 const app = express();
 
+const PAGE_NOT_FOUND = 404;
 const port = 3000;
 
 app.use(
@@ -26,12 +27,29 @@ app.get('*', (req, res) => {
   const store = createStore(req);
 
   // eslint-disable-next-line arrow-body-style
-  const promises = matchRoutes(Routes, req.path).map(({ route }) => {
-    return route.loadData ? route.loadData(store) : null;
-  });
+  const promises = matchRoutes(Routes, req.path)
+    .map(({ route }) => (route.loadData ? route.loadData(store) : null))
+    .map((promise) => {
+      if (promise) {
+        return new Promise((resolve, reject) => {
+          promise.then(resolve).catch(resolve);
+        });
+      }
+    });
 
   Promise.all(promises).then(() => {
-    res.send(renderer(req, store));
+    const context = {};
+    const content = renderer(req, store, context);
+
+    if (context.url) {
+      return res.redirect(301, context.url);
+    }
+
+    if (context.notFound) {
+      res.status(PAGE_NOT_FOUND);
+    }
+
+    res.send(content);
   });
 });
 
